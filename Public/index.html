@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy Search</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>PROXICURE</h1>
+
+        <form action="/submit" method="POST">
+            <div class="input-container">
+                <label for="input1">NAME:</label>
+                <input type="text" class="input1" id="input1" name="input1" required>
+            </div>
+            <div class="input-container">
+                <label for="inputMedicine">MEDICINE NAME:</label>
+                <input type="text" class="input2" id="inputMedicine" name="inputMedicine" required>
+            </div>
+            <button type="submit" id="submitButton">Submit</button>
+        </form>
+    </div>
+    <script src="main.js"></script>
+</body>
+
+</html>

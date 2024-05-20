@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        .leaflet-popup-content {
+            font-size: 16px;
+            width: 500px; /* Adjust the font size as needed */
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            
+        }
+        .back-button {
+            margin-right: 10px !important; /* Add some spacing between the button and the h1 */
+            text-decoration: none;
+            height: 30px !important;
+            border-radius: 5px !important;
+            text-align: center;
+            background-color: pink;
+            color: black;
+            width: 70px !important;
+        }   
+
+    </style>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="css/style2.css">
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <button onclick="prevpge()" class="back-button">Back</button>
+            <h1>Available Pharmacies</h1>
+        </div>
+        <form>
+            <div class="index2-container">
+                <h3>The Medicine is available at these pharmacies</h3>
+                <ul id="results-list">
+                    <% collectionName.forEach(name => { %>
+                        <li style="background-color: #f2f2f2; padding: 10px; margin: 5px; border: 1px solid #ddd; width: 200px; border-radius: 10px;">
+                            <%= name %>
+                        </li>
+                    <% }); %>
+                </ul>
+            </div>
+        </form>
+    </div>
+    
+    
+    <p><b>Click the below button to allow us track ur location and find pharmacy near you:</b></p>
+    <button id="trackLocation" class="btn-block">Allow Location Tracking</button>
+    <button id="holdButton" class="btn-block" onclick="redirectToIndex3()">Hold</button> <!-- The Hold button -->
+    <div id="map" style="width: 200px; height: 200px;"></div>
+
+
+    <script>
+
+        function prevpge(){
+            window.location.href = 'index.html';
+        }
+
+        var map;
+        var marker;
+        var line; // Variable to store the polyline
+        var currentLocation = null;
+        var destinations = [
+            { name: "Pharmacy A", lat: 11.95541, lon: 79.81966 },
+            { name: "Pharmacy B", lat: 11.92924, lon: 79.82996 },
+            { name: "Pharmacy C", lat: 11.90676, lon: 79.80691 },
+            { name: "Pharmacy D", lat: 10.93101, lon: 79.83177 }
+        ];
+
+        function initMap() {
+            map = L.map('map').setView([0, 0], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            marker = L.marker([0, 0]).addTo(map);
+            marker.bindPopup("Your location");
+
+            document.getElementById('trackLocation').addEventListener('click', trackLocation);
+        }
+
+        function trackLocation() {
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(function (position) {
+            var lat = position.coords.latitude;
+            var lon = position.coords.longitude;
+
+            marker.setLatLng([lat, lon]);
+
+            // Check if the map's size needs to be expanded
+            var mapDiv = document.getElementById('map');
+            if (mapDiv.style.width === '200px' && mapDiv.style.height === '200px') {
+                // Expand the map to full size
+                mapDiv.style.width = '100%';
+                mapDiv.style.height = '400px';
+                map.invalidateSize(); // Refresh the map to fit the expanded div
+            }
+
+            map.setView([lat, lon], 13);
+
+            currentLocation = { lat, lon };
+
+            // Remove the existing line if it exists
+            if (line) {
+                map.removeLayer(line);
+            }
+
+            // Calculate the shortest path to the nearest destination
+            calculateShortestPathToNearestDestination(currentLocation, destinations);
+        }, function (error) {
+            alert("Error getting location: " + error.message);
+        });
+    } else {
+        alert("Geolocation is not supported in your browser.");
+    }
+}
+
+
+        function calculateShortestPathToNearestDestination(start, destinations) {
+            var nearestDestination = findNearestDestination(start, destinations);
+            var distance = calculateDistance(start, nearestDestination);
+
+            // Draw a bold red line on the map
+            line = L.polyline([currentLocation, nearestDestination], { color: 'red', weight: 4 }).addTo(map);
+
+           
+            L.popup()
+                .setLatLng(nearestDestination)
+                .setContent("Nearby pharmacy: " + nearestDestination.name + "<br>Total distance: " + distance + " km")
+                .openOn(map);
+        }
+
+        function findNearestDestination(location, destinations) {
+            var minDistance = Number.MAX_VALUE;
+            var nearestDestination = null;
+
+            for (var i = 0; i < destinations.length; i++) {
+                var distance = calculateDistance(location, destinations[i]);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestDestination = destinations[i];
+                }
+            }
+
+            return nearestDestination;
+        }
+
+        function calculateDistance(location1, location2) {
+            var lat1 = location1.lat;
+            var lon1 = location1.lon;
+            var lat2 = location2.lat;
+            var lon2 = location2.lon;
+
+            var R = 6371; 
+            var dLat = deg2rad(lat2 - lat1);
+            var dLon = deg2rad(lon2 - lon1);
+            var a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            var distance = R * c;
+
+            return distance;
+        }
+
+        function deg2rad(deg) {
+            return deg * (Math.PI / 180);
+        }
+        function redirectToIndex3() {
+            window.location.href = 'index3.html';
+        }
+
+        
+
+        window.onload = initMap;
+    </script>
+</body>
+</html>
